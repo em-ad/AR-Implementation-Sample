@@ -133,7 +133,10 @@ open class ArVideoFragment : ArFragment() {
         }
 
         val fullTrackingImages = updatedAugmentedImages.filter { it.trackingMethod == AugmentedImage.TrackingMethod.FULL_TRACKING }
-        if (fullTrackingImages.isEmpty()) return
+        if (fullTrackingImages.isEmpty()) {
+            Log.e(TAG, "onUpdate: " + "EMPTY TRACKING IMAGE" )
+            return
+        }
 
         // If current active augmented image is tracked but video playback is paused - resume video playback
         activeAugmentedImage?.let { activeAugmentedImage ->
@@ -147,6 +150,7 @@ open class ArVideoFragment : ArFragment() {
 
         // Otherwise - make the first tracked image active and start video playback
         fullTrackingImages.firstOrNull()?.let { augmentedImage ->
+            Log.e(TAG, "onUpdate: " + augmentedImage.name )
             try {
                 playbackArVideo(augmentedImage)
             } catch (e: Exception) {
