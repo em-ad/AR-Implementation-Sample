@@ -1,6 +1,7 @@
 package com.shliama.augmentedvideotutorial
 
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.RectF
@@ -8,6 +9,7 @@ import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.*
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -25,14 +27,17 @@ import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.rendering.ExternalTexture
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.ux.ArFragment
+import com.google.gson.Gson
 import java.io.IOException
+import java.net.URL
 
-open class ArVideoFragment : ArFragment() {
+open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
 
     private lateinit var mediaPlayer: MediaPlayer
     private lateinit var externalTexture: ExternalTexture
     private lateinit var videoRenderable: ModelRenderable
     private lateinit var videoAnchorNode: VideoAnchorNode
+    private lateinit var toast: Toast
 
     private var activeAugmentedImage: AugmentedImage? = null
 
@@ -41,18 +46,39 @@ open class ArVideoFragment : ArFragment() {
         mediaPlayer = MediaPlayer()
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         val view = super.onCreateView(inflater, container, savedInstanceState)
+
+
+        return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         planeDiscoveryController.hide()
         planeDiscoveryController.setInstructionView(null)
         arSceneView.planeRenderer.isEnabled = false
         arSceneView.isLightEstimationEnabled = false
 
-        initializeSession()
-        createArScene()
+        val timer = object : CountDownTimer(500, 250) {
+            override fun onTick(l: Long) {
+                if (Dataholder.photos.size > 0) {
+                    initializeSession()
+                    createArScene()
+                    this.cancel()
+                }
+            }
 
-        return view
+            override fun onFinish() {
+                this.start()
+            }
+        }
+        timer.start()
     }
 
     override fun getSessionConfiguration(session: Session): Config {
@@ -63,9 +89,17 @@ open class ArVideoFragment : ArFragment() {
         fun setupAugmentedImageDatabase(config: Config, session: Session): Boolean {
             try {
                 config.augmentedImageDatabase = AugmentedImageDatabase(session).also { db ->
-                    db.addImage(TEST_VIDEO_1, loadAugmentedImageBitmap(TEST_IMAGE_1))
-                    db.addImage(TEST_VIDEO_2, loadAugmentedImageBitmap(TEST_IMAGE_2))
-                    db.addImage(TEST_VIDEO_3, loadAugmentedImageBitmap(TEST_IMAGE_3))
+                    for (item in Dataholder.photos.indices) {
+                        if (Dataholder.photos.get(item).second.split(".")[Dataholder.photos.get(item).second.split(".").size - 1].equals(".mp4")) {
+                            db.addImage(
+                                Dataholder.photos.get(item).second,
+                                BitmapFactory.decodeStream(URL(Dataholder.photos.get(item).first).openConnection().getInputStream()))
+                            Log.e(TAG, "setupAugmentedImageDatabase: " + Gson().toJson(Dataholder.photos[item]) )
+                        }
+                    }
+//                    db.addImage(TEST_VIDEO_1, loadAugmentedImageBitmap(TEST_IMAGE_1))
+//                    db.addImage(TEST_VIDEO_2, loadAugmentedImageBitmap(TEST_IMAGE_2))
+//                    db.addImage(TEST_VIDEO_3, loadAugmentedImageBitmap(TEST_IMAGE_3))
                 }
                 return true
             } catch (e: IllegalArgumentException) {
@@ -81,19 +115,16 @@ open class ArVideoFragment : ArFragment() {
             it.focusMode = Config.FocusMode.AUTO
 
             if (!setupAugmentedImageDatabase(it, session)) {
-                Toast.makeText(requireContext(), "Could not setup augmented image database", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "DB creation error", Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun createArScene() {
-        // Create an ExternalTexture for displaying the contents of the video.
         externalTexture = ExternalTexture().also {
             mediaPlayer.setSurface(it.surface)
         }
 
-        // Create a renderable with a material that has a parameter of type 'samplerExternal' so that
-        // it can display an ExternalTexture.
         ModelRenderable.builder()
             .setSource(requireContext(), R.raw.augmented_video_model)
             .build()
@@ -113,28 +144,25 @@ open class ArVideoFragment : ArFragment() {
         }
     }
 
-    /**
-     * In this case, we want to support the playback of one video at a time.
-     * Therefore, if ARCore loses current active image FULL_TRACKING we will pause the video.
-     * If the same image gets FULL_TRACKING back, the video will resume.
-     * If a new image will become active, then the corresponding video will start from scratch.
-     */
     override fun onUpdate(frameTime: FrameTime) {
         val frame = arSceneView.arFrame ?: return
 
         val updatedAugmentedImages = frame.getUpdatedTrackables(AugmentedImage::class.java)
 
         // If current active augmented image isn't tracked anymore and video playback is started - pause video playback
-        val nonFullTrackingImages = updatedAugmentedImages.filter { it.trackingMethod != AugmentedImage.TrackingMethod.FULL_TRACKING }
+        val nonFullTrackingImages =
+            updatedAugmentedImages.filter { it.trackingMethod != AugmentedImage.TrackingMethod.FULL_TRACKING }
         activeAugmentedImage?.let { activeAugmentedImage ->
             if (isArVideoPlaying() && nonFullTrackingImages.any { it.index == activeAugmentedImage.index }) {
                 pauseArVideo()
             }
         }
 
-        val fullTrackingImages = updatedAugmentedImages.filter { it.trackingMethod == AugmentedImage.TrackingMethod.FULL_TRACKING }
+        val fullTrackingImages =
+            updatedAugmentedImages.filter { it.trackingMethod == AugmentedImage.TrackingMethod.FULL_TRACKING }
         if (fullTrackingImages.isEmpty()) {
-            Log.e(TAG, "onUpdate: " + "EMPTY TRACKING IMAGE" )
+            Log.e(TAG, "EMPTY " )
+            Toast.makeText(context, "تصویری در صفحه تشخیص داده نمیشود", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -150,7 +178,6 @@ open class ArVideoFragment : ArFragment() {
 
         // Otherwise - make the first tracked image active and start video playback
         fullTrackingImages.firstOrNull()?.let { augmentedImage ->
-            Log.e(TAG, "onUpdate: " + augmentedImage.name )
             try {
                 playbackArVideo(augmentedImage)
             } catch (e: Exception) {
@@ -179,7 +206,7 @@ open class ArVideoFragment : ArFragment() {
     }
 
     private fun playbackArVideo(augmentedImage: AugmentedImage) {
-        Log.d(TAG, "playbackVideo = ${augmentedImage.name}")
+        Log.e(TAG, "playbackVideo = ${augmentedImage.name}")
 
         requireContext().assets.openFd(augmentedImage.name)
             .use { descriptor ->
@@ -191,9 +218,15 @@ open class ArVideoFragment : ArFragment() {
                     descriptor.length
                 )
 
-                val videoWidth = metadataRetriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH).toFloatOrNull() ?: 0f
-                val videoHeight = metadataRetriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT).toFloatOrNull() ?: 0f
-                val videoRotation = metadataRetriever.extractMetadata(METADATA_KEY_VIDEO_ROTATION).toFloatOrNull() ?: 0f
+                val videoWidth =
+                    metadataRetriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH).toFloatOrNull()
+                        ?: 0f
+                val videoHeight =
+                    metadataRetriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT).toFloatOrNull()
+                        ?: 0f
+                val videoRotation =
+                    metadataRetriever.extractMetadata(METADATA_KEY_VIDEO_ROTATION).toFloatOrNull()
+                        ?: 0f
 
                 // Account for video rotation, so that scale logic math works properly
                 val imageSize = RectF(0f, 0f, augmentedImage.extentX, augmentedImage.extentZ)
@@ -202,18 +235,25 @@ open class ArVideoFragment : ArFragment() {
                 val videoScaleType = VideoScaleType.CenterCrop
 
                 videoAnchorNode.setVideoProperties(
-                    videoWidth = videoWidth, videoHeight = videoHeight, videoRotation = videoRotation,
-                    imageWidth = imageSize.width(), imageHeight = imageSize.height(),
+                    videoWidth = videoWidth,
+                    videoHeight = videoHeight,
+                    videoRotation = videoRotation,
+                    imageWidth = imageSize.width(),
+                    imageHeight = imageSize.height(),
                     videoScaleType = videoScaleType
                 )
 
                 // Update the material parameters
-                videoRenderable.material.setFloat2(MATERIAL_IMAGE_SIZE, imageSize.width(), imageSize.height())
+                videoRenderable.material.setFloat2(
+                    MATERIAL_IMAGE_SIZE,
+                    imageSize.width(),
+                    imageSize.height()
+                )
                 videoRenderable.material.setFloat2(MATERIAL_VIDEO_SIZE, videoWidth, videoHeight)
                 videoRenderable.material.setBoolean(MATERIAL_VIDEO_CROP, VIDEO_CROP_ENABLED)
 
                 mediaPlayer.reset()
-                mediaPlayer.setDataSource(descriptor)
+                mediaPlayer.setDataSource("https://www.radiantmediaplayer.com/media/big-buck-bunny-360p.mp4")
             }.also {
                 mediaPlayer.isLooping = true
                 mediaPlayer.prepare()
@@ -234,7 +274,7 @@ open class ArVideoFragment : ArFragment() {
 
     private fun fadeInVideo() {
         ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 400L
+            duration = 200L
             interpolator = LinearInterpolator()
             addUpdateListener { v ->
                 videoRenderable.material.setFloat(MATERIAL_VIDEO_ALPHA, v.animatedValue as Float)
@@ -271,5 +311,11 @@ open class ArVideoFragment : ArFragment() {
         private const val MATERIAL_VIDEO_SIZE = "videoSize"
         private const val MATERIAL_VIDEO_CROP = "videoCropEnabled"
         private const val MATERIAL_VIDEO_ALPHA = "videoAlpha"
+    }
+
+    override fun onPrepared(p0: MediaPlayer?) {
+//        val uri = Uri.parse("https://www.radiantmediaplayer.com/media/big-buck-bunny-360p.mp4")
+//
+//        p0?.setDataSource(context!!, uri)
     }
 }
