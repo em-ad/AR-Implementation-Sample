@@ -4,15 +4,20 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import com.google.gson.Gson
+import com.squareup.picasso.Picasso
+import com.squareup.picasso.Target
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -43,14 +48,14 @@ class ArActivity : AppCompatActivity() {
                 checkMagazineVersion()
             }
         } else {
-            checkVersionPhotos();
+            checkVersionPhotos(Dataholder.magazineVersion.get(Dataholder.magazineVersion.size - 1).version);
         }
     }
 
     private fun checkArAccess() {
         if (openGlVersion.toDouble() >= MIN_OPEN_GL_VERSION) {
             supportFragmentManager.inTransaction {
-                replace(
+                add(
                     R.id.fragmentContainer,
                     ArVideoFragment()
                 )
@@ -64,9 +69,9 @@ class ArActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkVersionPhotos() {
+    private fun checkVersionPhotos(i: kotlin.Int) {
         val call: Call<ResponseBody> = ServiceGenerator.createService(apiInterfaces::class.java)
-            .getAsset(Dataholder.magazineVersion[Dataholder.magazineVersion.size-1].version)
+            .getAsset(i)
         call.enqueue(object : Callback<ResponseBody> {
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 ApiFailed()
@@ -95,10 +100,29 @@ class ArActivity : AppCompatActivity() {
                 res.result.get(item).outPutFileUrl
             )
             Dataholder.photos.add(pair)
+
+            val mTarget: Target = object : Target {
+                override fun onBitmapLoaded(bitmap: Bitmap?, loadedFrom: Picasso.LoadedFrom?) {
+                    Dataholder.photosBitmaps.add(bitmap)
+                    if(Dataholder.photosBitmaps.size == Dataholder.photos.size) {
+                        Dataholder.processDone = true
+                        checkArAccess()
+                    }
+                }
+
+                override fun onBitmapFailed(e: java.lang.Exception, errorDrawable: Drawable?) {}
+
+                override fun onPrepareLoad(drawable: Drawable?) {
+                }
+            }
+            for (item in Dataholder.photos.indices) {
+                    Picasso.get()
+                        .load(Dataholder.photos[item].first as String)
+                        .into(mTarget)
+            }
+
         }
-        Toast.makeText(this, "savePhotos: DONE with " + res.result.size + " photos", Toast.LENGTH_SHORT).show()
         Dataholder.processDone = true
-        checkArAccess()
     }
 
     private fun checkMagazineVersion() {
@@ -113,14 +137,20 @@ class ArActivity : AppCompatActivity() {
                 var res: MagazineApiResponse =
                     Gson().fromJson(response.body()?.string(), MagazineApiResponse::class.java)
                 Dataholder.magazineVersion = res.result
-                checkVersionPhotos()
+                var dialog = SelectorDialog(this@ArActivity, res.result, object: ItemSelectedInterface{
+                    override fun itemSelected(i: Int) {
+                        checkVersionPhotos(i)
+                    }
+                } )
+                dialog.show()
             }
 
         })
     }
 
     private fun ApiFailed() {
-        Toast.makeText(this, "API FAILED", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "خطا در برقراری ارتباط با سرور", Toast.LENGTH_SHORT).show()
+        finish()
     }
 
     private inline fun FragmentManager.inTransaction(func: FragmentTransaction.() -> FragmentTransaction) {

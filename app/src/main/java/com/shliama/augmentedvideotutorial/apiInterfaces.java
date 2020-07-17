@@ -13,5 +13,5 @@ interface apiInterfaces {
 
     @FormUrlEncoded
     @POST("ar/Arasset/Get")
-    Call<ResponseBody> getAsset(@Field("MagzineVersion") int version);
+    Call<ResponseBody> getAsset(@Field("MagzineVersion") Integer version);
 }

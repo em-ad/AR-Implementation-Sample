@@ -1,22 +1,23 @@
 package com.shliama.augmentedvideotutorial
 
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
+import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.*
 import android.media.MediaPlayer
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.animation.doOnStart
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.rotationMatrix
 import androidx.core.graphics.transform
 import com.google.ar.core.AugmentedImage
@@ -27,9 +28,7 @@ import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.rendering.ExternalTexture
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.ux.ArFragment
-import com.google.gson.Gson
 import java.io.IOException
-import java.net.URL
 
 open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
 
@@ -37,24 +36,12 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
     private lateinit var externalTexture: ExternalTexture
     private lateinit var videoRenderable: ModelRenderable
     private lateinit var videoAnchorNode: VideoAnchorNode
-    private lateinit var toast: Toast
 
     private var activeAugmentedImage: AugmentedImage? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mediaPlayer = MediaPlayer()
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val view = super.onCreateView(inflater, container, savedInstanceState)
-
-
-        return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -64,46 +51,23 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
         planeDiscoveryController.setInstructionView(null)
         arSceneView.planeRenderer.isEnabled = false
         arSceneView.isLightEstimationEnabled = false
-
-        val timer = object : CountDownTimer(500, 250) {
-            override fun onTick(l: Long) {
-                if (Dataholder.photos.size > 0) {
-                    initializeSession()
-                    createArScene()
-                    this.cancel()
-                }
-            }
-
-            override fun onFinish() {
-                this.start()
-            }
-        }
-        timer.start()
+        initializeSession()
+        createArScene()
     }
 
     override fun getSessionConfiguration(session: Session): Config {
 
-        fun loadAugmentedImageBitmap(imageName: String): Bitmap =
-            requireContext().assets.open(imageName).use { return BitmapFactory.decodeStream(it) }
-
         fun setupAugmentedImageDatabase(config: Config, session: Session): Boolean {
+
             try {
                 config.augmentedImageDatabase = AugmentedImageDatabase(session).also { db ->
-                    for (item in Dataholder.photos.indices) {
-                        if (Dataholder.photos.get(item).second.split(".")[Dataholder.photos.get(item).second.split(".").size - 1].equals(".mp4")) {
-                            db.addImage(
-                                Dataholder.photos.get(item).second,
-                                BitmapFactory.decodeStream(URL(Dataholder.photos.get(item).first).openConnection().getInputStream()))
-                            Log.e(TAG, "setupAugmentedImageDatabase: " + Gson().toJson(Dataholder.photos[item]) )
-                        }
+                    for(item in Dataholder.photosBitmaps.indices){
+                        db.addImage("test_video_1.mp4", Dataholder.photosBitmaps[item])
                     }
-//                    db.addImage(TEST_VIDEO_1, loadAugmentedImageBitmap(TEST_IMAGE_1))
-//                    db.addImage(TEST_VIDEO_2, loadAugmentedImageBitmap(TEST_IMAGE_2))
-//                    db.addImage(TEST_VIDEO_3, loadAugmentedImageBitmap(TEST_IMAGE_3))
                 }
                 return true
             } catch (e: IllegalArgumentException) {
-                Log.e(TAG, "Could not add bitmap to augmented image database", e)
+                Log.e(TAG, "Could not add bitmap to augmented image database" + e.message)
             } catch (e: IOException) {
                 Log.e(TAG, "IO exception loading augmented image bitmap.", e)
             }
@@ -115,7 +79,7 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
             it.focusMode = Config.FocusMode.AUTO
 
             if (!setupAugmentedImageDatabase(it, session)) {
-                Toast.makeText(requireContext(), "DB creation error", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "در ساخت دیتابیس واقعیت افزوده مشکلی پیش آمد", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -135,7 +99,7 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
                 renderable.material.setExternalTexture("videoTexture", externalTexture)
             }
             .exceptionally { throwable ->
-                Log.e(TAG, "Could not create ModelRenderable", throwable)
+                Log.e(TAG, "مدل قابل پخش ساخته نشد", throwable)
                 return@exceptionally null
             }
 
@@ -161,8 +125,7 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
         val fullTrackingImages =
             updatedAugmentedImages.filter { it.trackingMethod == AugmentedImage.TrackingMethod.FULL_TRACKING }
         if (fullTrackingImages.isEmpty()) {
-            Log.e(TAG, "EMPTY " )
-            Toast.makeText(context, "تصویری در صفحه تشخیص داده نمیشود", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "%%%EMPTY%%%")
             return
         }
 
@@ -181,7 +144,7 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
             try {
                 playbackArVideo(augmentedImage)
             } catch (e: Exception) {
-                Log.e(TAG, "Could not play video [${augmentedImage.name}]", e)
+                Log.e(TAG, " در پخش ویدیو خطایی رخ داد${augmentedImage.name}]", e)
             }
         }
     }
@@ -206,7 +169,11 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
     }
 
     private fun playbackArVideo(augmentedImage: AugmentedImage) {
-        Log.e(TAG, "playbackVideo = ${augmentedImage.name}")
+//        val toast: Toast = Toast.makeText(context, "در حال بارگزاری محتوای ویدیو...", Toast.LENGTH_SHORT)
+//        val toastLayout: LinearLayout = toast.view as LinearLayout
+//        val toastTV: TextView = toastLayout.getChildAt(0) as TextView
+//        toastTV.typeface = ResourcesCompat.getFont(context!!, R.font.app_font)
+//        toast.show()
 
         requireContext().assets.openFd(augmentedImage.name)
             .use { descriptor ->
@@ -228,7 +195,6 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
                     metadataRetriever.extractMetadata(METADATA_KEY_VIDEO_ROTATION).toFloatOrNull()
                         ?: 0f
 
-                // Account for video rotation, so that scale logic math works properly
                 val imageSize = RectF(0f, 0f, augmentedImage.extentX, augmentedImage.extentZ)
                     .transform(rotationMatrix(videoRotation))
 
@@ -253,7 +219,8 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
                 videoRenderable.material.setBoolean(MATERIAL_VIDEO_CROP, VIDEO_CROP_ENABLED)
 
                 mediaPlayer.reset()
-                mediaPlayer.setDataSource("https://www.radiantmediaplayer.com/media/big-buck-bunny-360p.mp4")
+                Log.e(TAG, "playbackArVideo: "  + Dataholder.photos[augmentedImage.index].second )
+                mediaPlayer.setDataSource(Dataholder.photos[augmentedImage.index].second as String)
             }.also {
                 mediaPlayer.isLooping = true
                 mediaPlayer.prepare()
@@ -297,14 +264,6 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
     companion object {
         private const val TAG = "ArVideoFragment"
 
-        private const val TEST_IMAGE_1 = "test_image_1.jpg"
-        private const val TEST_IMAGE_2 = "test_image_2.jpg"
-        private const val TEST_IMAGE_3 = "test_image_3.jpg"
-
-        private const val TEST_VIDEO_1 = "test_video_1.mp4"
-        private const val TEST_VIDEO_2 = "test_video_2.mp4"
-        private const val TEST_VIDEO_3 = "test_video_3.mp4"
-
         private const val VIDEO_CROP_ENABLED = true
 
         private const val MATERIAL_IMAGE_SIZE = "imageSize"
@@ -314,8 +273,6 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
     }
 
     override fun onPrepared(p0: MediaPlayer?) {
-//        val uri = Uri.parse("https://www.radiantmediaplayer.com/media/big-buck-bunny-360p.mp4")
-//
-//        p0?.setDataSource(context!!, uri)
+        Log.e(TAG, "Media Player Prepared Successfully" )
     }
 }
