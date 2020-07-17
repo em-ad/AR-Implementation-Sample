@@ -1,16 +1,14 @@
-package com.shliama.augmentedvideotutorial;
+package com.shliama.augmentedvideotutorial.DataHandling;
 
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.provider.ContactsContract;
 
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
 
-class ImageProvider {
+public class ImageProvider {
     public static ArrayList<String> getImagePath(String magazineIssue, int amount){
         ArrayList<String> images = new ArrayList<>();
         for (int i = 0; i < amount; i++) {

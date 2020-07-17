@@ -1,13 +1,11 @@
-package com.shliama.augmentedvideotutorial;
+package com.shliama.augmentedvideotutorial.DataHandling;
 
 import android.graphics.Bitmap;
-import android.os.CountDownTimer;
 import android.util.Pair;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-class Dataholder {
+public class Dataholder {
     public static String baseUrl = "";
     public static ArrayList<MagazineResult> magazineVersion = null;
     public static ArrayList<Pair<String, String>> photos = new ArrayList<>();

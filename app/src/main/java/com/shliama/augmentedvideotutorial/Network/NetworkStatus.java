@@ -1,4 +1,4 @@
-package com.shliama.augmentedvideotutorial;
+package com.shliama.augmentedvideotutorial.Network;
 
 import com.google.gson.annotations.SerializedName;
 

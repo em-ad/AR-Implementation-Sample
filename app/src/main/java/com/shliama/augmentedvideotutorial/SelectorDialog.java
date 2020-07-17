@@ -2,10 +2,8 @@ package com.shliama.augmentedvideotutorial;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.RadioButton;
@@ -13,9 +11,12 @@ import android.widget.RadioGroup;
 
 import androidx.annotation.NonNull;
 
+import com.shliama.augmentedvideotutorial.DataHandling.ItemSelectedInterface;
+import com.shliama.augmentedvideotutorial.DataHandling.MagazineResult;
+
 import java.util.ArrayList;
 
-class SelectorDialog extends Dialog implements View.OnClickListener {
+public class SelectorDialog extends Dialog implements View.OnClickListener {
 
     ArrayList<MagazineResult> versions = new ArrayList<>();
     RadioGroup group;
@@ -34,7 +35,7 @@ class SelectorDialog extends Dialog implements View.OnClickListener {
         group = findViewById(R.id.radioGroup);
         for (int i = 0; i < versions.size(); i++) {
             RadioButton button = new RadioButton(getContext());
-            button.setText(versions.get(i).version + " " + versions.get(i).title);
+            button.setText(versions.get(i).getVersion() + " " + versions.get(i).getTitle());
             button.setTextColor(Color.parseColor("#ffffff"));
             button.setId(i + 220);
             button.setGravity(Gravity.RIGHT);
@@ -46,7 +47,7 @@ class SelectorDialog extends Dialog implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        callback.itemSelected(versions.get(id - 220).version);
+        callback.itemSelected(versions.get(id - 220).getVersion());
         dismiss();
     }
 }

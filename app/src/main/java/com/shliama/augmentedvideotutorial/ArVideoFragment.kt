@@ -1,11 +1,7 @@
 package com.shliama.augmentedvideotutorial
 
 import android.animation.ValueAnimator
-import android.content.res.AssetManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.RectF
-import android.graphics.Typeface
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever.*
 import android.media.MediaPlayer
@@ -13,11 +9,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.LinearInterpolator
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.animation.doOnStart
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.rotationMatrix
 import androidx.core.graphics.transform
 import com.google.ar.core.AugmentedImage
@@ -28,6 +21,7 @@ import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.rendering.ExternalTexture
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.ux.ArFragment
+import com.shliama.augmentedvideotutorial.DataHandling.Dataholder
 import java.io.IOException
 
 open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {

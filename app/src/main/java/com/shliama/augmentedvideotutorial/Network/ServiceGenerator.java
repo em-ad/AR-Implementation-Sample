@@ -1,6 +1,8 @@
-package com.shliama.augmentedvideotutorial;
+package com.shliama.augmentedvideotutorial.Network;
 
 import android.util.Log;
+
+import com.shliama.augmentedvideotutorial.DataHandling.Dataholder;
 
 import java.io.IOException;
 
@@ -12,13 +14,13 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-class ServiceGenerator {
+public class ServiceGenerator {
 
     private static HttpLoggingInterceptor.Level logLevel = HttpLoggingInterceptor.Level.BODY;
     private static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
     private static HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
 
-    private static Retrofit.Builder builder =
+    public static Retrofit.Builder builder =
             new Retrofit.Builder()
                     .baseUrl(Dataholder.baseUrl)
                     .addConverterFactory(GsonConverterFactory.create());

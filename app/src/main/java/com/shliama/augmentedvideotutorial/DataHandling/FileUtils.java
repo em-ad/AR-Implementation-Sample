@@ -1,11 +1,11 @@
-package com.shliama.augmentedvideotutorial;
+package com.shliama.augmentedvideotutorial.DataHandling;
 
 import android.os.Environment;
 import android.util.Log;
 
 import java.io.File;
 
-class FileUtils {
+public class FileUtils {
 
     public static String getFilePath(String valueOf, String magazineIssue, FileType type) {
         String extension = "";

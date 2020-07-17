@@ -8,14 +8,18 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import com.google.gson.Gson
+import com.shliama.augmentedvideotutorial.DataHandling.Dataholder
+import com.shliama.augmentedvideotutorial.DataHandling.ItemSelectedInterface
+import com.shliama.augmentedvideotutorial.Network.AssetApiResponse
+import com.shliama.augmentedvideotutorial.Network.MagazineApiResponse
+import com.shliama.augmentedvideotutorial.Network.ServiceGenerator
+import com.shliama.augmentedvideotutorial.Network.apiInterfaces
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
 import okhttp3.ResponseBody
@@ -48,7 +52,9 @@ class ArActivity : AppCompatActivity() {
                 checkMagazineVersion()
             }
         } else {
-            checkVersionPhotos(Dataholder.magazineVersion.get(Dataholder.magazineVersion.size - 1).version);
+            checkVersionPhotos(
+                Dataholder.magazineVersion.get(
+                    Dataholder.magazineVersion.size - 1).version);
         }
     }
 
@@ -70,7 +76,8 @@ class ArActivity : AppCompatActivity() {
     }
 
     private fun checkVersionPhotos(i: kotlin.Int) {
-        val call: Call<ResponseBody> = ServiceGenerator.createService(apiInterfaces::class.java)
+        val call: Call<ResponseBody> = ServiceGenerator.createService(
+            apiInterfaces::class.java)
             .getAsset(i)
         call.enqueue(object : Callback<ResponseBody> {
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
@@ -127,7 +134,8 @@ class ArActivity : AppCompatActivity() {
 
     private fun checkMagazineVersion() {
         val call: Call<ResponseBody> =
-            ServiceGenerator.createService(apiInterfaces::class.java).latestVersion
+            ServiceGenerator.createService(
+                apiInterfaces::class.java).latestVersion
         call.enqueue(object : Callback<ResponseBody> {
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 ApiFailed()
@@ -137,7 +145,8 @@ class ArActivity : AppCompatActivity() {
                 var res: MagazineApiResponse =
                     Gson().fromJson(response.body()?.string(), MagazineApiResponse::class.java)
                 Dataholder.magazineVersion = res.result
-                var dialog = SelectorDialog(this@ArActivity, res.result, object: ItemSelectedInterface{
+                var dialog = SelectorDialog(this@ArActivity, res.result, object:
+                    ItemSelectedInterface {
                     override fun itemSelected(i: Int) {
                         checkVersionPhotos(i)
                     }

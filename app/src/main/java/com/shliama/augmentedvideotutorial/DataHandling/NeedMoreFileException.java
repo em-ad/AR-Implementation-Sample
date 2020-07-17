@@ -1,6 +1,6 @@
-package com.shliama.augmentedvideotutorial;
+package com.shliama.augmentedvideotutorial.DataHandling;
 
-class NeedMoreFileException extends Exception {
+public class NeedMoreFileException extends Exception {
     String payload = "";
 
     public String getPayload() {

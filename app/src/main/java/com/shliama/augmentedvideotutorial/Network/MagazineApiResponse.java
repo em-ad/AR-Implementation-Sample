@@ -1,6 +1,7 @@
-package com.shliama.augmentedvideotutorial;
+package com.shliama.augmentedvideotutorial.Network;
 
 import com.google.gson.annotations.SerializedName;
+import com.shliama.augmentedvideotutorial.DataHandling.MagazineResult;
 
 import java.io.Serializable;
 import java.util.ArrayList;
