@@ -38,7 +38,7 @@ public class SelectorDialog extends Dialog implements View.OnClickListener {
             button.setText(versions.get(i).getVersion() + " " + versions.get(i).getTitle());
             button.setTextColor(Color.parseColor("#ffffff"));
             button.setId(i + 220);
-            button.setGravity(Gravity.RIGHT);
+            button.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
             button.setOnClickListener(this);
             group.addView(button);
         }

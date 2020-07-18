@@ -21,6 +21,7 @@ import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.rendering.ExternalTexture
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.ux.ArFragment
+import com.google.gson.Gson
 import com.shliama.augmentedvideotutorial.DataHandling.Dataholder
 import java.io.IOException
 
@@ -55,15 +56,16 @@ open class ArVideoFragment : ArFragment(), MediaPlayer.OnPreparedListener {
 
             try {
                 config.augmentedImageDatabase = AugmentedImageDatabase(session).also { db ->
+                    Log.e(TAG, "IMAGES SIZE $$$$$$$$$ = " + Dataholder.photosBitmaps.size )
                     for(item in Dataholder.photosBitmaps.indices){
                         db.addImage("test_video_1.mp4", Dataholder.photosBitmaps[item])
                     }
                 }
                 return true
             } catch (e: IllegalArgumentException) {
-                Log.e(TAG, "Could not add bitmap to augmented image database" + e.message)
+                Log.e(TAG, "Could not add bitmap to augmented image database " + Gson().toJson(e), e)
             } catch (e: IOException) {
-                Log.e(TAG, "IO exception loading augmented image bitmap.", e)
+                Log.e(TAG, "IO exception loading augmented image bitmap " + Gson().toJson(e), e)
             }
             return false
         }

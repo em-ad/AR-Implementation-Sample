@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -110,6 +111,7 @@ class ArActivity : AppCompatActivity() {
 
             val mTarget: Target = object : Target {
                 override fun onBitmapLoaded(bitmap: Bitmap?, loadedFrom: Picasso.LoadedFrom?) {
+                    Log.e("tag", "onBitmapLoaded: " + bitmap )
                     Dataholder.photosBitmaps.add(bitmap)
                     if(Dataholder.photosBitmaps.size == Dataholder.photos.size) {
                         Dataholder.processDone = true
