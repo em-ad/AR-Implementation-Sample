@@ -41,7 +41,6 @@ class ArActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         if (intent != null && intent.hasExtra("base_url"))
             Dataholder.baseUrl = intent.getStringExtra("base_url")
         else Dataholder.baseUrl = Dataholder.testUrl
@@ -119,13 +118,14 @@ class ArActivity : AppCompatActivity() {
                     }
                 }
 
-                override fun onBitmapFailed(e: java.lang.Exception, errorDrawable: Drawable?) {}
-
                 override fun onPrepareLoad(drawable: Drawable?) {
+                }
+
+                override fun onBitmapFailed(errorDrawable: Drawable?) {
                 }
             }
             for (item in Dataholder.photos.indices) {
-                    Picasso.get()
+                    Picasso.with(this)
                         .load(Dataholder.photos[item].first as String)
                         .into(mTarget)
             }

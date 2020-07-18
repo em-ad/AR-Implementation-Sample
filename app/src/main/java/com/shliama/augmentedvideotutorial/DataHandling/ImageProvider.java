@@ -17,25 +17,4 @@ public class ImageProvider {
         }
         return images;
     }
-
-    public static void getBitmap(String src){
-        final Target mTarget = new Target() {
-            @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom loadedFrom) {
-                Dataholder.image = bitmap;
-            }
-
-            @Override
-            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-
-            }
-
-            @Override
-            public void onPrepareLoad(Drawable drawable) {
-            }
-        };
-
-
-        Picasso.get().load(src).into(mTarget);
-    }
 }
