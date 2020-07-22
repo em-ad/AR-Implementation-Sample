@@ -40,7 +40,7 @@ class ArActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_main_ar)
         if (intent != null && intent.hasExtra("base_url"))
             Dataholder.baseUrl = intent.getStringExtra("base_url")
         else Dataholder.baseUrl = Dataholder.testUrl

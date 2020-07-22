@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
@@ -35,10 +36,13 @@ public class SelectorDialog extends Dialog implements View.OnClickListener {
         group = findViewById(R.id.radioGroup);
         for (int i = 0; i < versions.size(); i++) {
             RadioButton button = new RadioButton(getContext());
+            RadioGroup.LayoutParams params = new RadioGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            button.setLayoutParams(params);
             button.setText(versions.get(i).getVersion() + " " + versions.get(i).getTitle());
             button.setTextColor(Color.parseColor("#ffffff"));
             button.setId(i + 220);
             button.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+            button.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
             button.setOnClickListener(this);
             group.addView(button);
         }
